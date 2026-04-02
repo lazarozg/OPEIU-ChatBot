@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPEIU ChatBot – Local 30</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #003087;
+    --blue-dark: #001f5c;
+    --blue-light: #e8eef8;
+    --red: #cc0000;
+    --red-dark: #990000;
+    --white: #ffffff;
+    --gray-light: #f4f4f4;
+    --gray-mid: #dde2ec;
+    --gray-text: #444;
+    --shadow: 0 2px 12px rgba(0,0,100,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: #e8eef8 url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23003087' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* HEADER */
+  header {
+    width: 100%;
+    background: var(--blue-dark);
+    border-bottom: 4px solid var(--red);
+    padding: 0 1rem;
+  }
+  .header-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+  }
+  .logo-circle {
+    width: 52px; height: 52px;
+    background: var(--white);
+    border-radius: 50%;
+    border: 3px solid var(--red);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .logo-text-inner {
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--blue-dark);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .logo-text-inner span {
+    display: block;
+    font-size: 13px;
+    color: var(--red);
+  }
+  .header-text h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+  }
+  .header-text h1 em {
+    color: #ffcc00;
+    font-style: normal;
+  }
+  .header-text p {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.7);
+    margin-top: 2px;
+  }
+  .badge-online {
+    margin-left: auto;
+    background: #22c55e;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .badge-online::before {
+    content: '';
+    width: 7px; height: 7px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* CHAT CONTAINER */
+  .chat-wrapper {
+    width: 100%;
+    max-width: 780px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 1rem 1rem;
+  }
+
+  /* QUICK TOPICS */
+  .quick-topics {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quick-topics p {
+    width: 100%;
+    font-size: 0.8rem;
+    color: var(--blue-dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .topic-chip {
+    background: white;
+    border: 1.5px solid var(--blue);
+    color: var(--blue);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+  .topic-chip:hover {
+    background: var(--blue);
+    color: white;
+  }
+
+  /* MESSAGES */
+  .messages {
+    flex: 1;
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 340px;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+    scroll-behavior: smooth;
+  }
+  .messages::-webkit-scrollbar { width: 5px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--gray-mid); border-radius: 99px; }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  .msg.user { flex-direction: row-reverse; }
+  .msg.user .bubble {
+    background: var(--blue);
+    color: white;
+    border-radius: 18px 4px 18px 18px;
+    margin-left: 40px;
+  }
+  .msg.bot .bubble {
+    background: white;
+    color: var(--gray-text);
+    border-radius: 4px 18px 18px 18px;
+    border: 1px solid var(--gray-mid);
+    box-shadow: var(--shadow);
+    margin-right: 40px;
+  }
+
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+  }
+  .avatar.bot-av {
+    background: var(--blue-dark);
+    color: #ffcc00;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.1;
+    border: 2px solid var(--red);
+  }
+  .avatar.user-av {
+    background: #dde2ec;
+    color: var(--blue-dark);
+    font-size: 1rem;
+  }
+
+  .bubble {
+    padding: 10px 14px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    max-width: 100%;
+    word-break: break-word;
+  }
+  .bubble strong { font-weight: 600; }
+  .bubble .source-tag {
+    display: inline-block;
+    margin-top: 8px;
+    background: var(--blue-light);
+    color: var(--blue-dark);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border-left: 3px solid var(--blue);
+  }
+  .bubble .alert-steward {
+    margin-top: 10px;
+    background: #fff3cd;
+    border-left: 3px solid #f59e0b;
+    padding: 8px 10px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: #7c5300;
+    font-weight: 600;
+  }
+
+  .typing-indicator { display: flex; gap: 5px; padding: 14px; align-items: center; }
+  .typing-indicator span {
+    width: 8px; height: 8px;
+    background: var(--blue);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
+  /* INPUT AREA */
+  .input-area {
+    margin-top: 14px;
+    background: white;
+    border: 2px solid var(--blue);
+    border-radius: 14px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px 8px 8px 14px;
+    box-shadow: 0 4px 20px rgba(0,48,135,0.12);
+    transition: border-color 0.2s;
+  }
+  .input-area:focus-within { border-color: var(--red); }
+
+  textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.95rem;
+    color: var(--gray-text);
+    background: transparent;
+    min-height: 42px;
+    max-height: 120px;
+    line-height: 1.5;
+    padding: 4px 0;
+  }
+  textarea::placeholder { color: #aaa; }
+
+  .send-btn {
+    width: 42px; height: 42px;
+    background: var(--blue);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--red); }
+  .send-btn:active { transform: scale(0.94); }
+  .send-btn svg { fill: white; width: 18px; height: 18px; }
+  .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* FOOTER */
+  footer {
+    width: 100%;
+    text-align: center;
+    font-size: 0.72rem;
+    color: #888;
+    padding: 8px 1rem 14px;
+  }
+  footer a { color: var(--blue); text-decoration: none; }
+
+  /* API KEY MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,20,80,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999;
+    padding: 1rem;
+  }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    color: var(--blue-dark);
+    margin-bottom: 6px;
+  }
+  .modal p { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 14px; }
+  .modal input {
+    width: 100%;
+    border: 2px solid var(--gray-mid);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    font-family: 'Source Sans 3', sans-serif;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus { border-color: var(--blue); }
+  .modal-btn {
+    width: 100%;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+  }
+  .modal-btn:hover { background: var(--red); }
+  .modal-note {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .modal-divider {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #aaa;
+    margin: 12px 0;
+  }
+  .modal-btn-secondary {
+    width: 100%;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .modal-btn-secondary:hover { background: #e0e0e0; }
+
+  @media (max-width: 520px) {
+    .header-text h1 { font-size: 1.1rem; }
+    .badge-online { display: none; }
+    .messages { max-height: 45vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h2>🔐 Configura tu ChatBot</h2>
+    <p>Para usar el <strong>OPEIU ChatBot Local 30</strong>, necesitas una API Key de Anthropic (Claude). Es gratis obtener una en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button class="modal-btn" onclick="saveApiKey()">✅ Iniciar ChatBot</button>
+    <div class="modal-divider">— o —</div>
+    <button class="modal-btn-secondary" onclick="useDemoMode()">🎭 Modo Demo (sin API Key)</button>
+    <p class="modal-note">🔒 Tu API Key se guarda solo en este navegador (localStorage) y nunca se comparte. El chatbot consulta el contrato OPEIU Local 30 Kaiser San Diego 2023-2027.</p>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo-circle">
+      <div class="logo-text-inner">
+        <span>OPEIU</span>
+        LOCAL<br>30
+      </div>
+    </div>
+    <div class="header-text">
+      <h1>OPEIU <em>ChatBot</em></h1>
+      <p>Asistente de Confianza · Kaiser San Diego · Contrato 2023-2027</p>
+    </div>
+    <div class="badge-online">● EN LÍNEA</div>
+  </div>
+</header>
+
+<!-- MAIN CHAT -->
+<div class="chat-wrapper">
+  <!-- QUICK TOPICS -->
+  <div class="quick-topics">
+    <p>⚡ Preguntas frecuentes:</p>
+    <button class="topic-chip" onclick="sendQuick('¿Cuántas horas de vacaciones me corresponden según mi antigüedad?')">🏖️ Vacaciones</button>
+    <button class="topic-chip" onclick="sendQuick('¿Cómo funciona el pago de horas extra y overtime?')">⏰ Overtime</button>
+    <button class="topic-chip" onclick="sendQuick('¿Qué es el proceso de grievance y cómo lo inicio?')">📋 Grievance</button>
+    <button class="topic-chip" onclick="sendQuick('¿Cuáles son mis derechos si me llaman a una reunión disciplinaria?')">🛡️ Disciplina</button>
+    <button class="topic-chip" onclick="sendQuick('¿Cuántos días de Sick Leave acumulo por mes?')">🏥 Sick Leave</button>
+    <button class="topic-chip" onclick="sendQuick('¿Cómo funciona la antigüedad (seniority) para escoger turnos?')">⭐ Seniority</button>
+    <button class="topic-chip" onclick="sendQuick('¿Qué días son holidays pagados?')">🎉 Holidays</button>
+    <button class="topic-chip" onclick="sendQuick('¿Cómo pido un permiso de ausencia (leave of absence)?')">📝 Leave</button>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="messages" id="messages">
+    <div class="msg bot">
+      <div class="avatar bot-av">L30</div>
+      <div class="bubble">
+        👋 ¡Hola! Soy el <strong>Asistente de Confianza Local 30</strong>.<br><br>
+        Estoy aquí para ayudarte a entender tu contrato colectivo con Kaiser San Diego (2023-2027). Pregúntame sobre:<br><br>
+        • 🏖️ Vacaciones, Sick Leave, Holidays<br>
+        • ⏰ Horas extra y overtime<br>
+        • 🛡️ Disciplina y tus derechos<br>
+        • 📋 Proceso de Grievance<br>
+        • ⭐ Seniority y turnos<br>
+        • 💰 Salarios y beneficios<br><br>
+        <div class="alert-steward">⚠️ Si tienes un problema con tu supervisor, recuerda: <strong>tienes derecho a pedir un Steward. No vayas a esa reunión solo/a.</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <textarea id="userInput" placeholder="Escribe tu pregunta sobre el contrato..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<footer>
+  OPEIU ChatBot Local 30 · Kaiser San Diego · Contrato 2023-2027 |
+  <a href="https://opeiulocal30.org" target="_blank">opeiulocal30.org</a> |
+  📞 (619) 640-4840
+</footer>
+
+<script>
+// ─── CONTRACT KNOWLEDGE BASE ───────────────────────────────────────────────
+const CONTRACT_CONTEXT = `
+CONTRATO COLECTIVO OPEIU LOCAL 30 – KAISER PERMANENTE SAN DIEGO 2023-2027
+Vigencia: October 1, 2023 – July 1, 2027
+
+=== ANTIGÜEDAD (SENIORITY) – Artículo 6 ===
+- Se cuenta en meses calendario desde la fecha de contratación dentro del Bargaining Unit.
+- Se pierde si: el empleado renuncia, es despedido, no regresa del layoff en 5 días hábiles, se agota el recall, se retira, o transfiere fuera del bargaining unit.
+- Empleados con 6+ meses que terminan y son recontratados dentro de 6 meses conservan su seniority.
+- Desempate: fecha de solicitud de empleo; si igual, orden alfabético del apellido.
+
+=== TIPOS DE EMPLEADOS – Artículo 6 ===
+- Full-time: 80+ horas por período de pago (pay period).
+- Part-time: 40-79 horas por período de pago.
+- On-Call: menos de 40 horas por período de pago o reemplazo intermitente. No recibe Health Plan, Dental ni holiday pay. Recibe diferencial de $0.70/hora.
+- Irregularly Scheduled Part-time (ISPT): on-call que trabaja 40+ horas por 4 meses consecutivos, se convierte a ISPT para recibir beneficios.
+- Temporales: contratados por 3 meses o menos. Sin vacaciones, sick leave, health plan ni holidays. Después de 12 meses automáticamente se vuelven regulares.
+
+=== REDUCCIÓN DE FUERZA (LAYOFF) – Artículo 7 ===
+- Principio: seniority del bargaining unit rige, si méritos y habilidades son aproximadamente iguales.
+- Orden de layoff: primero temporales, luego on-call, luego ISPT, después part-time y full-time (por seniority inversa).
+- Aviso: 2 semanas de aviso o 2 semanas de pago si no es posible el aviso.
+- Recall rights: 1 año si tiene 1+ año de seniority; menos si seniority menor.
+- Temporary Force Reduction (KTO): el empleado menos antiguo se manda a casa primero. Orden: Registry/Agency, Temporales, empleados en Premium Hours, Voluntary KTO, On-Call, ISPT, Part-time reducido, KTO obligatorio.
+
+=== CONTRATACIONES, TRASLADOS, PROMOCIONES – Artículo 8 ===
+- Vacantes se publican por 7 días calendario.
+- Empleados con 18+ meses pueden transferirse máximo 2 veces en 18 meses.
+- Período de evaluación post-transferencia: 120 días calendario.
+- Dentro de los 14 días hábiles del traslado el empleado puede regresar a su posición anterior sin perder seniority.
+- Senior positions: mérito y habilidad son criterios; si hay diferencia, un Business Representative del sindicato participa en la selección.
+
+=== PROBACIÓN – Artículo 9 ===
+- Full-time y part-time: 120 días calendario.
+- El período puede extenderse 60 días adicionales con notificación al empleado y al sindicato.
+- Durante probación: el empleado puede ser despedido sin causa y sin acceso al proceso de grievance.
+
+=== DISCRIMINACIÓN – Artículo 11 ===
+- Prohibida por: raza, color, religión, credo, origen nacional, ascendencia, sexo, orientación sexual, edad, discapacidad física, discapacidad mental, información genética, identidad de género, expresión de género, estatus de veterano, u otra categoría protegida por ley federal, estatal o local.
+
+=== HORAS DE TRABAJO Y OVERTIME – Artículo 12 ===
+- Semana normal: 40 horas / 5 días de 8 horas consecutivos.
+- Un día de trabajo = 8 horas dentro de 9 horas consecutivas con máx. 1 hora de almuerzo no pagado.
+- Pay period = 2 semanas de trabajo.
+- Overtime: 1.5x por horas sobre 8 en un día o sobre 40 en la semana.
+- Tiempo y medio (1.5x) por las primeras 4 horas sobre 8; doble tiempo (2x) por horas sobre 12 en un turno.
+- Si un turno empieza dentro de 9 horas del fin del turno anterior: 1.5x las primeras 4 horas, luego 2x.
+- 2.5x por horas sobre 16 en un día.
+- 2x por el séptimo día consecutivo trabajado.
+- Segundos fines de semana consecutivos: 1.5x (excepto si el empleado lo pidió por escrito).
+- Breaks: 15 minutos por cada 4 horas continuas de trabajo.
+- Horarios deben publicarse 4 semanas antes y actualizarse semanalmente.
+- Cambios de horario: publicados el jueves de la semana anterior; notificación de 24 horas mínima al empleado.
+- Horas adicionales disponibles: se ofrecen primero a voluntarios part-time del mismo turno, luego otros turnos, luego ISPT, luego on-calls.
+- Overtime rotado en el departamento por seniority.
+
+=== COMPENSACIÓN – Artículo 13 ===
+- Aumento por promoción dentro de la misma familia de trabajo: misma escala de paso.
+- Trabajo en clasificación más alta (temporario): se paga al rate de la clasificación más alta.
+- Trabajo en clasificación más baja: se mantiene el rate de la clasificación original.
+- Red Circle Rates: aplican solo al individuo y posición actual.
+- Progresión de pasos:
+  • Step 1: primeros 6 meses
+  • Step 2: 6 meses adicionales
+  • Step 3: 1 año más
+  • Steps 4, 5, 6: 1 año cada uno
+  • Step 7: si existe, después de 1 año en Step 6
+  • Longevity: 10 años = $0.35/hora extra; 15 años = $0.50/hora extra
+- Para part-time: progresión por horas trabajadas (no meses):
+  • Step 6 meses: 1,000 horas; Step 1 año: 2,000 horas; Step 2 años: 4,000 horas; Step 3 años: 6,000 horas; Step 4 años: 8,000 horas; Step 5 años: 10,000 horas.
+- Turno vespertino (evening, empieza 2pm-10pm): $2.00/hora diferencial.
+- Turno nocturno (night, empieza 10pm-6am): $3.25/hora diferencial.
+- Standby pay: 1/2 del rate regular hasta máximo $12.00/hora; mínimo 2 horas garantizadas al ser llamado.
+- Call Back pay: mínimo 2 horas al rate regular si se llama antes o después del turno.
+- Reporting pay: si el empleado llega y no hay trabajo (por causas del empleador): mínimo 2 horas.
+- Bilingual pay: $65/mes o $0.375/hora si se requiere interpretación más del 5% del tiempo. Level 2 bilingüe: $0.55/hora.
+- Training/Preceptor pay: 5% sobre el rate regular por horas como entrenador designado.
+- Error de pago: se corrige en 72 horas de que el empleado notifica.
+- Senior differential: se paga por horas compensadas a quienes tengan designación de "Senior".
+
+=== WORK/LIFE BALANCE TIME OFF – Artículo 14 ===
+--- LIFE BALANCE DAYS (LBD) ---
+- Full-time acumula 3.33 horas/mes (máximo 40 horas acumuladas).
+- Part-time: prorrateado según horas pagadas.
+- Se usan para cualquier razón, en incrementos de 8 horas o menos.
+- Solicitud: 72 horas de anticipación; emergencias: sin previo aviso.
+- Se pueden donar a otro empleado elegible.
+- Se pagan al terminar el empleo, retiro o cambio de estatus inelegible.
+
+--- HOLIDAYS (DÍAS FESTIVOS) ---
+Días festivos designados y pagados (7):
+1. New Year's Day (1 de enero)
+2. Martin Luther King Jr. Day
+3. Memorial Day
+4. Independence Day (4 de julio)
+5. Labor Day
+6. Thanksgiving Day
+7. Christmas Day (25 de diciembre)
+- Departamentos de 5 días (lunes-viernes): si cae sábado → se observa el viernes anterior; si cae domingo → se observa el lunes siguiente.
+- Departamentos de 7 días: el holiday se paga el día calendario que cae.
+- Prima por trabajar en holiday: 1.5x el rate regular ADEMÁS del rate regular (o sea, 2.5x total). O pueden tomar un día compensatorio dentro de 30 días al rate regular.
+- On-call y temporales que trabajen en holiday: 1.5x solamente.
+- Part-time holidays no trabajados: 10% del total de horas straight-time pagadas en el período anterior.
+
+--- VACACIONES ---
+Acumulación mensual full-time:
+- 0-4 años: 6.66 hrs/mes = 10 días/año
+- 5-8 años: 10.00 hrs/mes = 15 días/año
+- 9-10 años: 13.33 hrs/mes = 20 días/año
+- 11+ años: 16.66 hrs/mes = 25 días/año
+- Máximo acumulado: 500 horas (o el doble del acumulado anual a partir de 2002).
+- Part-time: prorrateado según horas pagadas.
+- Al terminar el empleo/retiro: se pagan todas las vacaciones acumuladas no usadas.
+- El empleado puede pedir anticipo del cheque de vacaciones con 14 días de anticipación.
+
+--- SICK LEAVE ---
+- Acumulación: 10 horas por mes calendario.
+- Part-time: 10 horas/mes prorrateado.
+- Acumulación ilimitada.
+- Se puede usar desde el primer día de enfermedad.
+- Para citas médicas, dentales u ópticas.
+- No se paga al terminar el empleo (excepto para cálculo de pensión si tiene 250+ horas).
+- Sick Leave Bank de 250+ horas al retiro: todas las horas se convierten en Crédito de Servicio para la pensión.
+
+=== PERMISOS DE AUSENCIA (LEAVES OF ABSENCE) – Artículo 15 ===
+- Elegibilidad: 6+ meses de servicio continuo (excepto discapacidad por embarazo).
+- Solicitud por escrito; el empleador responde en 7 días hábiles.
+- Al regresar: misma posición o equivalente al mismo salario.
+
+Medical Leave:
+- Con menos de 3 años de servicio: máximo 90 días.
+- Con 3+ años: máximo 365 días.
+- Paga beneficios de Health Plan, Dental y Seguro de Vida por hasta 6 meses.
+
+Personal Leave: máximo 30 días.
+- Health Plan, Dental y Vida pagados por el empleador por hasta 30 días.
+
+Occupational Injury/Illness Leave: desde el primer día de empleo.
+- Pagado por el empleador por hasta 2 años.
+- El empleador regresa al empleado en 7 días de recibir el aviso de regreso.
+
+Family Leave (FMLA/CFRA): el empleador cumple con ley estatal y federal.
+- Health Plan, Dental y Vida pagados durante Family Leave.
+- Se acumula Vacation, LBD y Sick Leave por 30 días.
+
+Military Leave: según USERRA.
+- El empleado conserva seniority y regresa a su posición.
+
+Education Leave: hasta 3 días/año pagados para empleados con clasificaciones que requieren licencia o certificado, después de 1 año de servicio.
+
+Bereavement Leave:
+- 3 días pagados por muerte de familiar inmediato.
+- 2 días adicionales si se viaja 300+ millas.
+- Familia inmediata incluye: cónyuge/pareja doméstica, padre, madre, hijos, hermanos, abuelos, nietos, y familiares en el mismo hogar (y sus equivalentes políticos y adoptivos).
+- 7 días sin pago adicionales por muerte de cónyuge, padre o hijo (pueden convertirse hasta 40 horas a vacaciones).
+
+Personal Time Off (sin pago): hasta 5 días al año; no se puede negar sin razón.
+
+=== DISCIPLINA Y DESPIDO – Artículo 21 ===
+- El empleador tiene derecho a despedir por causa justificada (good cause).
+- Antes de despedir por bajo rendimiento: debe haber dado aviso previo por escrito con copia al sindicato.
+- Para misconduct grave o negligencia grave: el principio de "just cause" aplica sin necesidad de aviso previo.
+- Al ser despedido: se informa la causa al momento; la causa se confirma por escrito si se solicita.
+- Avisos disciplinarios: se eliminan del archivo si no hay reincidencia similar en 12 meses.
+- El empleador hace esfuerzos para completar investigaciones en 30 días.
+- Aviso de terminación: 2 semanas de aviso o 2 semanas de pago (para empleados con 1+ año de servicio, excepto por misconduct).
+- DERECHO AL STEWARD: El empleado TIENE DERECHO a pedir un steward en cualquier reunión de "fact-finding" o disciplinaria donde se puede imponer disciplina de primer aviso o más severa. El empleador debe dar aviso adecuado para que el empleado pueda arreglar la presencia del steward.
+
+=== PROCESO DE GRIEVANCE – Artículo 25 ===
+¿Qué es un grievance? Una queja formal de que el contrato fue violado.
+PLAZO CRÍTICO: 15 días hábiles desde que el empleado supo (o debió saber) del evento para presentar el grievance por escrito. Los despidos y layoffs van directo al Step 2.
+
+- Step 1: Escrito al Department Administrator. El DA responde en 10 días hábiles.
+- Step 2: Apelación al Human Resources Consultant. Respuesta en 15 días hábiles.
+- Step 3: Apelación al Senior Labor Relations Representative (correo certificado, 10 días). Respuesta en 20 días hábiles.
+- Step 4 (Arbitration): Si no se resuelve, el sindicato puede llevar a arbitraje (15 días desde respuesta Step 3).
+- El árbitro no puede agregar, modificar ni eliminar términos del contrato.
+- Costo del arbitraje: dividido entre ambas partes.
+- Mediation: disponible por acuerdo mutuo entre Step 3 y arbitraje.
+
+=== STEWARDS Y COMITÉ DE GRIEVANCE – Artículo 24 ===
+- El empleador reconoce el derecho del sindicato a designar chief stewards y stewards.
+- Un steward debe salir de su área de trabajo para atender asuntos sindicales con permiso de su supervisor directo.
+- Debes notificar la presencia del steward al supervisor del área visitada.
+
+=== SEGURIDAD – Artículo 29 ===
+- El empleador provee materiales, equipo y condiciones de trabajo seguros.
+- Los empleados reportan condiciones inseguras al Safety Director o Comité de Seguridad sin miedo a represalias.
+- El sindicato nombra 2 empleados al Comité de Seguridad del empleador.
+- Radiólogos embarazadas: se reasignan a áreas con mínima exposición a radiación sin reducción de pago.
+- Condiciones médicamente peligrosas para embarazadas: el empleador busca posiciones temporales comparables.
+
+=== BENEFICIOS – Artículo 18 ===
+- Health Plan (Kaiser): empleados que trabajan 20+ horas/semana; a partir del primer día del mes siguiente a la contratación. Co-pago de $5 por visita médica y recetas.
+- Dependientes cubiertos: cónyuge/pareja doméstica; hijos solteros hasta los 26 años.
+- Dental (Delta Dental Group 821): empleados 20+ horas/semana; efectivo el primer día del mes después de 6 meses de servicio continuo. 70% basic services, 50% major services, 100% preventivo. Máximo $1,000/año.
+- Seguro de vida: $6,000 vida + $6,000 muerte accidental + $6,000 incapacidad total para empleados 32+ horas/semana.
+- Pensión (KPSCEPP): todos los empleados desde el primer día. Vest en 5 años. Pensión normal a los 65; anticipada a los 55 con 15+ años. Fórmula: 1.45% × promedio último 5 años de salario × años de crédito.
+- 401(k): Plan voluntario disponible.
+- Incapacidad (Income Protection): empleados de 20+ horas/semana. Menos de 2 años: hasta 1 año de beneficio. 2+ años: hasta 5 años. Beneficio: 50-70% del salario base.
+
+=== NO HUELGAS – NO CIERRES PATRONALES – Artículo 22 ===
+- Acuerdo de no huelgas ni paros de trabajo; todos los conflictos se resuelven mediante el procedimiento de grievance.
+
+=== JUST CULTURE – Artículo 28 ===
+- Marco de trabajo conjunto para garantizar calidad, servicio y seguridad del paciente.
+- Promueve reportar errores y casi-errores sin miedo a represalias.
+- Responsabilidad balanceada entre individuos y la organización.
+
+=== VIGENCIA DEL CONTRATO – Artículo 31 ===
+- Effective: October 1, 2023 – July 1, 2027.
+- Se renueva automáticamente de año en año a menos que cualquiera de las partes dé aviso de 90 días antes de la expiración anual.
+
+=== CONTACTO OPEIU LOCAL 30 ===
+- Dirección: 6136 Mission Gorge Rd., Suite 214, San Diego, CA 92120
+- Teléfono: (619) 640-4840 | Fax: (619) 640-4830 | Toll-free: (866) 673-4830
+- Web: opeiulocal30.org
+`;
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let apiKey = localStorage.getItem('opeiu_api_key') || '';
+let conversationHistory = [];
+let isLoading = false;
+let demoMode = false;
+
+// ─── INIT ───────────────────────────────────────────────────────────────────
+window.onload = () => {
+  if (apiKey) {
+    document.getElementById('apiModal').style.display = 'none';
+  }
+  document.getElementById('userInput').focus();
+};
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-')) {
+    alert('Por favor ingresa una API Key válida de Anthropic (empieza con sk-)');
+    return;
+  }
+  apiKey = key;
+  localStorage.setItem('opeiu_api_key', key);
+  document.getElementById('apiModal').style.display = 'none';
+  document.getElementById('userInput').focus();
+}
+
+function useDemoMode() {
+  demoMode = true;
+  document.getElementById('apiModal').style.display = 'none';
+  document.getElementById('userInput').focus();
+  addMessage('bot', '⚠️ <strong>Modo Demo activado.</strong> Las respuestas son ejemplos de cómo funciona el chatbot. Para respuestas reales del contrato, ingresa tu API Key de Anthropic reiniciando la página.');
+}
+
+// ─── QUICK TOPICS ────────────────────────────────────────────────────────────
+function sendQuick(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+// ─── SEND MESSAGE ────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  // Add user message
+  addMessage('user', escapeHtml(text));
+  conversationHistory.push({ role: 'user', content: text });
+  input.value = '';
+  autoResize(input);
+
+  // Show typing
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  const typingId = addTyping();
+
+  try {
+    let responseText;
+    if (demoMode) {
+      await sleep(1500);
+      responseText = getDemoResponse(text);
+    } else {
+      responseText = await callClaudeAPI(text);
+    }
+
+    removeTyping(typingId);
+    conversationHistory.push({ role: 'assistant', content: responseText });
+    addMessage('bot', formatResponse(responseText));
+  } catch (err) {
+    removeTyping(typingId);
+    addMessage('bot', `❌ <strong>Error:</strong> ${err.message}. Verifica tu API Key o intenta de nuevo.`);
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+// ─── CLAUDE API ──────────────────────────────────────────────────────────────
+async function callClaudeAPI(userMessage) {
+  const systemPrompt = `Eres el "Asistente de Confianza Local 30" para Kaiser San Diego. Tu misión es resolver dudas sobre el Contrato Colectivo OPEIU Local 30 – Kaiser Permanente San Diego 2023-2027 de forma clara, protectora y orientada al trabajador.
+
+ESTILO DE RESPUESTA:
+1. Directo al punto: responde la duda de inmediato sin introducciones largas.
+2. Usa viñetas (•) para que la información se lea rápido en celular.
+3. Cita el contrato: al final de cada respuesta incluye siempre: "📋 Fuente: Artículo X / Párrafo XXXX del contrato Local 30"
+4. Lenguaje simple: usa palabras claras. En vez de "periodo de acumulación" di "cómo juntas tus horas".
+5. Protección: si la duda es sobre un problema con un supervisor o reunión disciplinaria, SIEMPRE incluye: "⚠️ Tienes derecho a pedir un Steward. No vayas a esa reunión solo/a."
+6. Si no sabes algo con certeza, dilo y sugiere contactar a OPEIU Local 30: (619) 640-4840.
+7. Responde siempre en español.
+
+CONOCIMIENTO DEL CONTRATO:
+${CONTRACT_CONTEXT}`;
+
+  const messages = conversationHistory.slice(-8); // últimos 8 mensajes de contexto
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: messages
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    if (response.status === 401) throw new Error('API Key inválida. Recarga la página e ingresa tu API Key correcta.');
+    throw new Error(err.error?.message || `Error del servidor (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+// ─── DEMO RESPONSES ──────────────────────────────────────────────────────────
+function getDemoResponse(msg) {
+  const lower = msg.toLowerCase();
+  if (lower.includes('vacacion') || lower.includes('vacation')) {
+    return `Tu tiempo de vacaciones depende de tu antigüedad:\n\n• 0-4 años → 10 días/año (6.66 hrs/mes)\n• 5-8 años → 15 días/año (10 hrs/mes)\n• 9-10 años → 20 días/año (13.33 hrs/mes)\n• 11+ años → 25 días/año (16.66 hrs/mes)\n\nMáximo que puedes acumular: 500 horas.\n\nSi terminas el empleo o te retiras, te pagan TODAS las vacaciones acumuladas sin usar.\n\n📋 Fuente: Artículo 14, Sección 7 del contrato Local 30`;
+  }
+  if (lower.includes('overtime') || lower.includes('extra') || lower.includes('horas')) {
+    return `El pago de horas extra funciona así:\n\n• Más de 8 horas en un día → 1.5x tu salario\n• Más de 12 horas en un día → 2x tu salario\n• Más de 16 horas en un día → 2.5x tu salario\n• 7mo día consecutivo → 2x tu salario\n• 2do fin de semana consecutivo → 1.5x\n\nSi tu turno empieza dentro de 9 horas del turno anterior: primeras 4 horas = 1.5x, luego = 2x.\n\n📋 Fuente: Artículo 12, Sección 2 del contrato Local 30`;
+  }
+  if (lower.includes('grievance') || lower.includes('queja')) {
+    return `El proceso de Grievance tiene 4 pasos:\n\n• ⏰ PLAZO CRÍTICO: tienes 15 días hábiles para presentarlo por escrito\n• Step 1: Al Department Administrator (responde en 10 días hábiles)\n• Step 2: Al HR Consultant (15 días para responder)\n• Step 3: Al Senior Labor Relations Rep (20 días para responder)\n• Step 4: Arbitraje si no se resuelve\n\n⚠️ Tienes derecho a pedir un Steward. No vayas a esa reunión solo/a.\n\n📋 Fuente: Artículo 25 del contrato Local 30`;
+  }
+  if (lower.includes('disciplin') || lower.includes('reunion') || lower.includes('reunión')) {
+    return `Tus derechos en una reunión disciplinaria:\n\n• Tienes derecho a que un Steward esté presente en cualquier reunión disciplinaria o "fact-finding"\n• El empleador DEBE darte aviso adecuado para que puedas organizar que el Steward esté ahí\n• La disciplina debe ser documentada por escrito con copia al sindicato\n• Los avisos disciplinarios se eliminan del archivo después de 12 meses sin reincidencia\n\n⚠️ Tienes derecho a pedir un Steward. No vayas a esa reunión solo/a.\n\n📋 Fuente: Artículo 21, Sección 3 del contrato Local 30`;
+  }
+  if (lower.includes('sick') || lower.includes('enferm')) {
+    return `Cómo acumulas Sick Leave:\n\n• 10 horas por mes calendario\n• Part-time: 10 horas/mes prorrateado según horas pagadas\n• ¡Acumulación ILIMITADA! No hay techo\n• Se puede usar desde el primer día de enfermedad\n• También para citas médicas, dentales u ópticas\n• NO se paga al terminar el empleo\n• EXCEPCIÓN: si tienes 250+ horas al retirarte, se convierten en Crédito de Servicio para la pensión\n\n📋 Fuente: Artículo 14, Sección 17 del contrato Local 30`;
+  }
+  return `Gracias por tu pregunta. En el Modo Demo solo puedo responder preguntas sobre vacaciones, overtime, sick leave, grievance y disciplina.\n\nPara respuestas completas del contrato 2023-2027, ingresa tu API Key de Anthropic.\n\n¿Tienes dudas? Llama a OPEIU Local 30: 📞 (619) 640-4840`;
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+function addMessage(role, content) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  const avatarEl = document.createElement('div');
+  avatarEl.className = `avatar ${role === 'bot' ? 'bot-av' : 'user-av'}`;
+  avatarEl.innerHTML = role === 'bot' ? 'L30' : '👤';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = content;
+
+  div.appendChild(avatarEl);
+  div.appendChild(bubble);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('messages');
+  const id = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = id;
+  div.innerHTML = `
+    <div class="avatar bot-av">L30</div>
+    <div class="bubble">
+      <div class="typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    </div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function formatResponse(text) {
+  // Format bullet points, bold, source tags, and steward alerts
+  let html = escapeHtml(text);
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  // Source tag
+  html = html.replace(/(📋\s*Fuente:[^\n]+)/g, '<span class="source-tag">$1</span>');
+  // Steward alert
+  html = html.replace(/(⚠️[^\n]*Steward[^\n]*)/gi, '<div class="alert-steward">$1</div>');
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+
+</body>
+</html>
